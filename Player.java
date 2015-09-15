@@ -73,11 +73,6 @@ public class Player implements pppp.sim.Player {
 	                 Point[] rats, Move[] moves)
 	{
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
-			Point src = pipers[id][p];
-			Point dst = pos[p][pos_index[p]];
-			// if null then get nearest rat
-			if (dst == null) dst = nearest_rat[p];
-			
 			// if player is trying to return to base but doesn't have any rats
 			if (pos_index[p] == 2 && !withRats(src, rats)) {
 				// go to nearest rat
@@ -88,6 +83,11 @@ public class Player implements pppp.sim.Player {
 			if (pos_index[p] == 1 && withRats(src, rats)) {	
 				pos_index[p]++;
 			}
+			
+			Point src = pipers[id][p];
+			Point dst = pos[p][pos_index[p]];
+			// if null then get nearest rat
+			if (dst == null) nearest_rat[p] = dst = getNearestRat(src, rats);
 			
 			// if position is reached
 			if (Math.abs(src.x - dst.x) < 0.000001 &&
