@@ -94,6 +94,25 @@ public class Player implements pppp.sim.Player {
 			moves[p] = move(src, dst, pos_index[p] > 1);
 		}
 	} 
+	public Point getNearestRat(Point piper_pos, Point[] rats){
+		double shortCut = 11;
+		double min = Double.MAX_VALUE;
+		int min_index = -1;
+		for(int i = 0 ; i < rats.length; i++){
+			double dis = calDistance(piper_pos, rats[i]);
+			if(dis > 10){
+				if(dis <= shortCut)
+					return rats[i];
+				if(dis < min){
+					min = dis;
+					min_index = i;
+				}
+			}	
+		}
+		//If there is no rats, return null;
+		if(min_index == -1) return null;
+		return rats[min_index];
+	}
 	public boolean withRats(Point piper_pos, Point[] rats){ 
 		for(int i = 0 ; i < rats.length; i++){
 			if(within(piper_pos, rats[i]))
@@ -102,11 +121,14 @@ public class Player implements pppp.sim.Player {
 		return false;
 	}
 	public boolean within(Point p1, Point p2){
-		double dx = p1.x - p2.x;
-		double dy = p1.y - p2.y;
-		double length = Math.sqrt(dx * dx + dy * dy);
-		if(length < 10)
+		double length = calDistance(p1, p2);
+		if(length <= 10)
 			return true;
 		return false;
+	}
+	public double calDistance(Point p1, Point p2){
+		double dx = p1.x - p2.x;
+		double dy = p1.y - p2.y;
+		return Math.sqrt(dx * dx + dy * dy);
 	}
 }
