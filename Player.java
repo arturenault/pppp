@@ -1,4 +1,4 @@
-package pppp.g0;
+package pppp.g9;
 
 import pppp.sim.Point;
 import pppp.sim.Move;
@@ -12,7 +12,8 @@ public class Player implements pppp.sim.Player {
 	private int side = 0;
 	private int[] pos_index = null;
 	private Point[][] pos = null;
-	private Point[] random_pos = null;
+	private Point[] nearest_rat = null;
+	private bool[] has_rats = null;
 	private Random gen = new Random();
 
 	// create move towards specified destination
@@ -45,7 +46,8 @@ public class Player implements pppp.sim.Player {
 		this.side = side;
 		int n_pipers = pipers[id].length;
 		pos = new Point [n_pipers][5];
-		random_pos = new Point [n_pipers];
+		nearest_rat = new Point [n_pipers];
+		has_rat = new bool[n_pipers];
 		pos_index = new int [n_pipers];
 		for (int p = 0 ; p != n_pipers ; ++p) {
 			// spread out at the door level
@@ -56,7 +58,7 @@ public class Player implements pppp.sim.Player {
 			boolean swap  = id == 1 || id == 3;
 			// first and third position is at the door
 			pos[p][0] = pos[p][2] = point(door, side * 0.5, neg_y, swap);
-			// second position is chosen randomly in the rat moving area
+			// second position is the nearest rat
 			pos[p][1] = null;
 			// fourth and fifth positions are outside the rat moving area
 			pos[p][3] = point(door * -6, side * 0.5 + 3, neg_y, swap);
@@ -73,21 +75,31 @@ public class Player implements pppp.sim.Player {
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
 			Point src = pipers[id][p];
 			Point dst = pos[p][pos_index[p]];
-			// if null then get random position
-			if (dst == null) dst = random_pos[p];
+			// if null then get nearest rat
+			if (dst == null) dst = nearest_rat[p];
+			
+			// if player is trying to return to base but doesn't have any rats
+			if (pos_index[p] == 2 && !withRats(src, rats)) {
+				// go to nearest rat
+				pos_index[p]--;
+			}
+			
+			// if the player is looking for rats and has found one
+			if (pos_index[p] == 1 && withRats(src, rats)) {	
+				pos_index[p]++;
+			}
+			
 			// if position is reached
 			if (Math.abs(src.x - dst.x) < 0.000001 &&
-			    Math.abs(src.y - dst.y) < 0.000001) {
+			    Math.abs(src.y - dst.y) < 0.000001 ) {
 				// discard random position
-				if (dst == random_pos[p]) random_pos[p] = null;
+				if (dst == nearest_rat[p]) nearest_rat[p] = null;
 				// get next position
 				if (++pos_index[p] == pos[p].length) pos_index[p] = 0;
 				dst = pos[p][pos_index[p]];
 				// generate a new position if random
 				if (dst == null) {
-					double x = (gen.nextDouble() - 0.5) * side * 0.9;
-					double y = (gen.nextDouble() - 0.5) * side * 0.9;
-					random_pos[p] = dst = new Point(x, y);
+					nearest_rat[p] = dst = getNearestRat(src, rats);
 				}
 			}
 			// get move towards position
