@@ -62,8 +62,8 @@ public class Player implements pppp.sim.Player {
 			// second position is chosen randomly in the rat moving area
 			pos[p][1] = null;
 			// fourth and fifth positions are outside the rat moving area
-			pos[p][3] = point(door * -6, side * 0.5 + 3, neg_y, swap);
-			pos[p][4] = point(door * +6, side * 0.5 + 3, neg_y, swap);
+			pos[p][3] = p % 2 == 0 ? point(door * -6, side * 0.5 + 3, neg_y, swap) : point(door * +6, side * 0.5 + 3, neg_y, swap);
+			pos[p][4] = p % 2 == 0 ? point(door * +6, side * 0.5 + 3, neg_y, swap) : point(door * -6, side * 0.5 + 3, neg_y, swap);
 			// start with first position
 			pos_index[p] = 0;
 		}
@@ -73,19 +73,27 @@ public class Player implements pppp.sim.Player {
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 	                 Point[] rats, Move[] moves)
 	{
+        try {
         if (rats.length != rats_assigned.length) {
             rats_assigned = new boolean[rats.length];
         }
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
-			Point src = pipers[id][p];
-			Point dst = pos[p][pos_index[p]];
-			// if null then get random position
-			if (dst == null) dst = nearest_rat[p];
-			// if position is reached
-			if (Math.abs(src.x - dst.x) < 0.000001 &&
+			Point src = pipers[id][p];	
+
+            if (pos_index[p] == 2 && !withRats(src, rats)) {
+                rats_assigned = new boolean[rats.length];
+                pos_index[p] = 1;
+            }
+
+            Point dst = pos[p][pos_index[p]];
+
+            if (dst == null) dst = nearest_rat[p];
+
+            // if position is reached
+			if ( Math.abs(src.x - dst.x) < 0.000001 &&
 			    Math.abs(src.y - dst.y) < 0.000001) {
 				// discard random position
-				if (dst == nearest_rat[p]) nearest_rat[p] = null;
+				if (dst == nearest_rat[p]) nearest_rat[p] = getNearestRat(src, rats);
 				// get next position
 				if (++pos_index[p] == pos[p].length) pos_index[p] = 0;
 				dst = pos[p][pos_index[p]];
@@ -97,6 +105,9 @@ public class Player implements pppp.sim.Player {
 			// get move towards position
 			moves[p] = move(src, dst, pos_index[p] > 1);
 		}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 	public Point getNearestRat(Point piper_pos, Point[] rats){
