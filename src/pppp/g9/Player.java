@@ -1,3 +1,17 @@
+/********************************************
+ * Group 9
+ * Artur Renault & Jing Guo
+ *
+ * Pied piper player class; based off g0.
+ *
+ * Implements a divide and conquer strategy:
+ *  players go for the closest rat that is not
+ *  assigned to a player and return to base.
+ *
+ *  If rats are lost during return, they attempt
+ *  to find new rats.
+ * *****************************************/
+
 package pppp.g9;
 
 import pppp.sim.Point;
