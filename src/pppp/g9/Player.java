@@ -24,10 +24,12 @@ public class Player implements pppp.sim.Player {
     // see details below
     private int id = -1;
     private int side = 0;
+    private int piper_at_door = -1;
     private int[] pos_index = null;
     private Point[][] pos = null;
     private Random gen = new Random();
-    private Point[] player_rats;
+    private Point[] piper_rats;
+    private Point[] piper_positions;
 
     // create move towards specified destination
     private static Move move(Point src, Point dst, boolean play)
@@ -58,10 +60,11 @@ public class Player implements pppp.sim.Player {
         this.id = id;
         this.side = side;
         int n_pipers = pipers[id].length;
-        pos = new Point [n_pipers][5];
+        pos = new Point [n_pipers][4];
         pos_index = new int [n_pipers];
-        player_rats = new Point[rats.length];
-
+        piper_rats = new Point[n_pipers];
+        piper_positions = new Point[n_pipers];
+        
         for (int p = 0 ; p != n_pipers ; ++p) {
             // spread out at the door level
             double door = 0.0;
@@ -73,9 +76,8 @@ public class Player implements pppp.sim.Player {
             pos[p][0] = pos[p][2] = point(door, side * 0.5, neg_y, swap);
             // second position is chosen randomly in the rat moving area
             pos[p][1] = null;
-            // fourth and fifth positions are outside the rat moving area
-            pos[p][3] = p % 2 == 0 ? point(door * -6, side * 0.5 + 3, neg_y, swap) : point(door * +6, side * 0.5 + 3, neg_y, swap);
-            pos[p][4] = p % 2 == 0 ? point(door * +6, side * 0.5 + 3, neg_y, swap) : point(door * -6, side * 0.5 + 3, neg_y, swap);
+            
+            pos[p][3] = point(door, side * 0.5 + 10, neg_y, swap);
             // start with first position
             pos_index[p] = 0;
         }
@@ -89,6 +91,7 @@ public class Player implements pppp.sim.Player {
             try {
                 for (int p = 0 ; p != pipers[id].length ; ++p) {
                     Point src = pipers[id][p];	
+                    piper_positions[p] = src;
 
                     if (pos_index[p] == 2 && !withRats(src, rats)) {
                         pos_index[p] = 1;
@@ -101,15 +104,29 @@ public class Player implements pppp.sim.Player {
                     // if position is reached
                     if ( Math.abs(src.x - dst.x) < 0.000001 &&
                             Math.abs(src.y - dst.y) < 0.000001 ||
-                            pos_index[p] == 1 && within(src, player_rats[p])) {
+                            pos_index[p] == 1 && within(src, piper_rats[p])) {
+
                         // get next position
-                        if (++pos_index[p] == pos[p].length) pos_index[p] = 0;
+                        if (++pos_index[p] == pos[p].length) {
+                            pos_index[p] = 0;
+                            piper_rats[p] = null;
+                            piper_at_door = -1;
+                        }
+
+                        if (pos_index[p] == 3) {
+                            if (piper_at_door > 0 && piper_at_door != p) {
+                                pos_index[p] = 1;
+                            } else {
+                                piper_at_door = p;
+                            }
+                        }
+
                         dst = pos[p][pos_index[p]];
                         // generate a new position if random
                         if (dst == null) {
                             dst = getNearestRat(src, rats, p);
                         }
-                            }
+                    }
                     // get move towards position
                     moves[p] = move(src, dst, pos_index[p] > 1);
                 }
@@ -120,17 +137,16 @@ public class Player implements pppp.sim.Player {
     }
 
     public Point getNearestRat(Point piper_pos, Point[] rats, int piper_index){
-        double shortCut = 11;
         double min = Double.MAX_VALUE;
         int min_index = 0;
         for(int i = 0 ; i < rats.length; i++){
             double dis = calDistance(piper_pos, rats[i]);
-            if(dis < min){
+            if(dis < min && (piper_rats[piper_index] != null || dis > 10)){
                 boolean already_assigned = false;
-                for (int j = 0; j < player_rats.length; j++) {
-                    if (player_rats[j] != null && sameRat(rats[i], player_rats[j])) {
+                for (int j = 0; j < piper_rats.length; j++) {
+                    if (piper_rats[j] != null && sameRat(rats[i], piper_rats[j])) {
                         if (j == piper_index) {
-                            player_rats[j] = rats[i];
+                            piper_rats[j] = rats[i];
                             return rats[i];
                         } else already_assigned = true;
                     }
@@ -141,8 +157,16 @@ public class Player implements pppp.sim.Player {
                 }
             } 
         }
-        player_rats[piper_index] = rats[min_index];
+        piper_rats[piper_index] = rats[min_index];
         return rats[min_index];
+    }
+
+    public boolean nearTeammate(Point piper_pos, Point[] other_pipers) {
+        for (int i = 0; i < other_pipers.length; i++) {
+            if(within(piper_pos, other_pipers[i])) 
+                return true;
+        }
+        return false;
     }
 
     public boolean withRats(Point piper_pos, Point[] rats){ 
