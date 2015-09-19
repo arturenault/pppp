@@ -26,11 +26,16 @@ public class Player implements pppp.sim.Player {
     private int side = 0;
     private int piper_at_door = -1;
     private int[] pos_index = null;
+    private int[] near_pos_index;
+    private int[] far_pos_index;
     private Point door_pos = null;
     private Point[][] pos = null;
     private Random gen = new Random();
     private Point[] piper_rats;
     private Point[] piper_positions;
+    private Point[] basic_positions;
+    private Point[][] near_pos;
+    private Point[][] far_pos;
 
     // create move towards specified destination
     private static Move move(Point src, Point dst, boolean play)
@@ -63,9 +68,14 @@ public class Player implements pppp.sim.Player {
         int n_pipers = pipers[id].length;
         pos = new Point [n_pipers][4];
         pos_index = new int [n_pipers];
+        near_pos_index = new int[n_pipers];
+        far_pos_index = new int[n_pipers];
         piper_rats = new Point[n_pipers];
         piper_positions = new Point[n_pipers];
-
+        near_pos = new Point[n_pipers][4];
+        far_pos = new Point[n_pipers][5];
+        double tmp = (side - 20) / 4;
+   
         for (int p = 0 ; p != n_pipers ; ++p) {
             // spread out at the door level
             double door = 0.0;
@@ -77,17 +87,45 @@ public class Player implements pppp.sim.Player {
             door_pos = pos[p][0] = pos[p][2] = point(door, side * 0.5, neg_y, swap);
             // second position is chosen randomly in the rat moving area
             pos[p][1] = null;
-
-            pos[p][3] = point(door, side * 0.5 + 10, neg_y, swap);
+         
+            pos[p][3] = point(door, side * 0.5 + 5, neg_y, swap);
             // start with first position
             pos_index[p] = 0;
+            far_pos_index[p] = 0;
+            near_pos_index[p] = 0;
+            neg_y = swap = false; 
+            if(p % 2 == 0){
+            	far_pos[p][0] = door_pos; 
+            	if(p / 2 == 0){
+            		far_pos[p][1] = point(-side / 4, side / 2 - 10, neg_y, swap);
+            		far_pos[p][2] = point(-side / 2 + 10, side / 4, neg_y, swap);
+            		far_pos[p][3] = point(-side / 4, 0, neg_y, swap);
+            	}else {
+					far_pos[p][1] = point(side / 4, side / 2 - 10, neg_y, swap);
+            		far_pos[p][2] = point(side/2 - 10, side / 4, neg_y, swap);
+            		far_pos[p][3] = point(side/4, 0, neg_y, swap);
+				}
+            }else{
+            	near_pos[p][0] = near_pos[p][2] = door_pos;
+            	if(p == 1){
+            		near_pos[p][1] = point(-side / 4, 0, neg_y, swap);
+            		near_pos[p][3] = pos[p][3];
+             	}else{
+             		near_pos[p][1] = point(side / 4, 0, neg_y, swap);
+            		near_pos[p][3] = pos[p][3];
+             	}
+            }
         }
     }
-
+    public static void debug(Point point){
+    	System.out.println(" point " + point.x + ", " + point.y);
+    }
     // return next locations on last argument
     public void play(Point[][] pipers, boolean[][] pipers_played,
             Point[] rats, Move[] moves)
     {
+    	if(rats.length >= 20)
+    		loop(pipers, pipers_played, rats, moves);
         if (rats.length < 20) {
             try {
                 for (int p = 0 ; p != pipers[id].length ; ++p) {
@@ -149,7 +187,59 @@ public class Player implements pppp.sim.Player {
             }
         }
     }
-
+    public void loop(Point[][] pipers, boolean[][] pipers_played,
+            Point[] rats, Move[] moves){
+    	for(int p = 0; p < pipers[id].length; p++){
+    		Point src = pipers[id][p];
+    		Point dst;
+    		if(p % 2 == 0){
+    			dst = far_pos[p][far_pos_index[p]];
+    		}else{
+    			dst = near_pos[p][near_pos_index[p]];
+    		}
+    		if( Math.abs(src.x - dst.x) < 0.000001 &&
+                    Math.abs(src.y - dst.y) < 0.000001){
+    			if(p % 2 == 0){
+    					
+    				if(far_pos_index[p] == 3){
+    					if(!samePos(src, pipers[id][p + 1])){
+    						moves[p] = move(src, src, true);
+    						continue;
+    						}
+    					far_pos_index[p] = 1;
+    					}
+    				else {
+						++far_pos_index[p];
+					}
+    				
+    				dst = far_pos[p][far_pos_index[p]];
+    				
+    			}else{
+    				if(near_pos_index[p] == 3){
+    					if(withRats(src, rats)){
+    						moves[p] = move(src, src, true);
+    						continue;
+    					}
+    					near_pos_index[p] = 0;
+    					}
+    				else {
+						++near_pos_index[p];
+					}
+    				dst = near_pos[p][near_pos_index[p]];	
+    			}
+    		}
+    		if(p % 2 == 0){
+    			moves[p] = move(src, dst, far_pos_index[p] > 1);
+    		}else{
+    			moves[p] = move(src, dst, near_pos_index[p] > 1);
+    		}
+    		
+    	}
+    }
+    public boolean samePos(Point p1, Point p2){
+    	if(Math.abs(p1.x - p2.x) < 0.0001 && Math.abs(p1.y - p2.y) < 0.0001) return true;
+    	return false;
+    }
     public Point getNearestRat(Point piper_pos, Point[] rats, int piper_index){
         double min = Double.MAX_VALUE;
         int min_index = -1;
