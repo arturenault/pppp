@@ -135,7 +135,9 @@ public class Player implements pppp.sim.Player {
                         if (dst == null) {
                             dst = getNearestRat(src, rats, p);
                             if (within(dst, door_pos)) {
-                               pos_index[p] = 3; 
+                                // if this returned a rat within the door, that must mean
+                                // all rats are at he door. make all pipers bring rats in
+                                pos_index[p] = 3; 
                             }
                         }
                             }
