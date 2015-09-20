@@ -1,6 +1,6 @@
 /********************************************
  * Group 9
- * Artur Renault & Jing Guo
+ * Artur Renault, Jing Guo, Cathy Jin
  *
  * Pied piper player class; based off g0.
  *
@@ -103,22 +103,22 @@ public class Player implements pppp.sim.Player {
             if(p % 2 == 0){
                 far_pos[p][0] = door_pos; 
                 if(p / 2 == 0){
-                    far_pos[p][1] = point(-side / 4, side / 2 - 10, neg_y, swap);
-                    far_pos[p][2] = point(-side / 2 + 10, side / 4, neg_y, swap);
+                    far_pos[p][1] = point(-side / 4, -side / 2 + 10, neg_y, swap);
+                    far_pos[p][2] = point(-side / 2 + 10, -side / 4, neg_y, swap);
                     far_pos[p][3] = point(-side / 4, 0, neg_y, swap);
                 } else {
-                    far_pos[p][1] = point(side / 4, side / 2 - 10, neg_y, swap);
-                    far_pos[p][2] = point(side/2 - 10, side / 4, neg_y, swap);
+                    far_pos[p][1] = point(side / 4, -side / 2 + 10, neg_y, swap);
+                    far_pos[p][2] = point(side / 2 - 10, -side / 4, neg_y, swap);
                     far_pos[p][3] = point(side/4, 0, neg_y, swap);
                 }
             } else{
                 near_pos[p][0] = near_pos[p][2] = door_pos;
                 if(p == 1){
                     near_pos[p][1] = point(-side / 4, 0, neg_y, swap);
-                    near_pos[p][3] = pos[p][3];
+                    near_pos[p][3] = point(door, side * 0.5 + 3, neg_y, swap);
                 }else{
                     near_pos[p][1] = point(side / 4, 0, neg_y, swap);
-                    near_pos[p][3] = pos[p][3];
+                    near_pos[p][3] = point(door, side * 0.5 + 3, neg_y, swap);
                 }
             }
         }
