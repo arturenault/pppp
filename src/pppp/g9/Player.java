@@ -109,7 +109,7 @@ public class Player implements pppp.sim.Player {
                 } else {
                     far_pos[p][1] = point(side / 4, -side / 2 + 10, neg_y, swap);
                     far_pos[p][2] = point(side / 2 - 10, -side / 4, neg_y, swap);
-                    far_pos[p][3] = point(side/4, 0, neg_y, swap);
+                    far_pos[p][3] = point(side / 4, 0, neg_y, swap);
                 }
             } else{
                 near_pos[p][0] = near_pos[p][2] = door_pos;
