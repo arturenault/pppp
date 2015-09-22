@@ -39,7 +39,7 @@ public class Player implements pppp.sim.Player {
 	private Point[][] near_pos;
 	private Point[][] far_pos;
 	private Point[][] sweep_pos;
-	private boolean switchStrategy;
+	private boolean[] switchStrategy;
 
 	// create move towards specified destination
 	private static Move move(Point src, Point dst, boolean play)
@@ -79,7 +79,7 @@ public class Player implements pppp.sim.Player {
 		piper_positions = new Point[n_pipers];
 		near_pos = new Point[n_pipers][4];
 		far_pos = new Point[n_pipers][5];
-		switchStrategy = false;
+		switchStrategy = new boolean[n_pipers];
 		
 		sweep_pos = new Point[n_pipers][4];
 		sweep_pos_index = new int[n_pipers];
@@ -87,6 +87,7 @@ public class Player implements pppp.sim.Player {
 		double tmp = (side - 20) / 4;
 
 		for (int p = 0 ; p != n_pipers ; ++p) {
+			switchStrategy[p] = false;
 			// spread out at the door level
 			double door = 0.0;
 			if (n_pipers != 1) door = p * 1.8 / (n_pipers - 1) - 0.9;
@@ -104,7 +105,7 @@ public class Player implements pppp.sim.Player {
 			int x = 0;
 			if (n_pipers != 0)
 				x = (side / (n_pipers + 1)) * (p + 1) - side / 2; 
-			sweep_pos[p][1] = point(x, 0, neg_y, swap);
+			sweep_pos[p][1] = point(x, side * 0.1, neg_y, swap);
 			sweep_pos[p][2] = point(door, side * 0.5 - 12, neg_y, swap);
 			sweep_pos[p][3] = point(door, side * 0.5 + 2, neg_y, swap);
 			sweep_pos_index[p] = 0;
@@ -150,16 +151,18 @@ public class Player implements pppp.sim.Player {
 	{
 		density = rats.length / (double) side;
 
-		if(!switchStrategy && density > density_threshold){
-			if (!switchStrategy)
-				sweepStrategy(pipers, pipers_played, rats, moves);
+		for (int p = 0; p < pipers[id].length; p++) {
+			if(density > density_threshold){
+				if (!switchStrategy[p])
+					sweepStrategy(pipers, pipers_played, rats, moves);
+				else 
+					denseStrategy(pipers, pipers_played, rats, moves);
+				//if(pipers[id].length >= 4)
+				//	denseStrategy(pipers, pipers_played, rats, moves);
+			}
 			else 
-				denseStrategy(pipers, pipers_played, rats, moves);
-			//if(pipers[id].length >= 4)
-			//	denseStrategy(pipers, pipers_played, rats, moves);
+				sparseStrategy(pipers,pipers_played, rats, moves);
 		}
-		else 
-			sparseStrategy(pipers,pipers_played, rats, moves);
 	}
 
 
@@ -179,7 +182,7 @@ public class Player implements pppp.sim.Player {
 						moves[p] = move(src, src, true);
 						continue;
 					}
-					switchStrategy = true;
+					switchStrategy[p] = true;
 				}
 			}
 			else {
