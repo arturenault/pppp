@@ -106,7 +106,7 @@ public class Player implements pppp.sim.Player {
 			if (n_pipers != 0)
 				x = (side / (n_pipers + 1)) * (p + 1) - side / 2; 
 			sweep_pos[p][1] = point(x, side * 0.1, neg_y, swap);
-			sweep_pos[p][2] = point(0, side * 0.5 - 12, neg_y, swap);
+			sweep_pos[p][2] = point(0, side * 0.5 - 2, neg_y, swap);
 			sweep_pos[p][3] = point(0, side * 0.5 + 2, neg_y, swap);
 			sweep_pos_index[p] = 0;
 
@@ -217,21 +217,19 @@ public class Player implements pppp.sim.Player {
 				    pos_index[p] == 3 && !withRats_door(door_pos, rats)) { 
 
 				// get next position
-				if (++pos_index[p] == pos[p].length) {
-					pos_index[p] = 0;
-					//piper_at_door = -1;
-				}
+				++pos_index[p];
 
-				if (pos_index[p] == 3) {
+				if (pos_index[p] == 4) {
 					//TODO
 					if(withRats_door(src, rats)){
-						System.out.println("piper " + p + "should wait");
+						//System.out.println("piper " + p + "should wait");
 						//piper_at_door = p;
 						moves[p] = move(src, src, true);
+						pos_index[p] = 3;
 						continue;
 						}
 					else {
-						pos_index[p] = 1;
+						pos_index[p] = 0;
 					}
 						
 //					if (piper_at_door >= 0 && piper_at_door != p) {
