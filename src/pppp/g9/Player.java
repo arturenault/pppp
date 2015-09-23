@@ -29,6 +29,7 @@ public class Player implements pppp.sim.Player {
 	private int[] pos_index = null;
 	private int[] near_pos_index;
 	private int[] far_pos_index;
+	private int[] sweep_pos_index;
 	private Point door_pos = null;
 	private Point[][] pos = null;
 	private Random gen = new Random();
@@ -36,6 +37,8 @@ public class Player implements pppp.sim.Player {
 	private Point[][] near_pos;
 	private Point[][] far_pos;
 	private int with_rat_threshold = 2;
+	private Point[][] sweep_pos;
+	private boolean[] switchStrategy;
 
 	// create move towards specified destination
 	private static Move move(Point src, Point dst, boolean play)
@@ -75,8 +78,15 @@ public class Player implements pppp.sim.Player {
 		
 		near_pos = new Point[n_pipers][4];
 		far_pos = new Point[n_pipers][5];
+		
+		switchStrategy = new boolean[n_pipers];
+		
+		sweep_pos = new Point[n_pipers][4];
+		sweep_pos_index = new int[n_pipers];
+		
 
 		for (int p = 0 ; p != n_pipers ; ++p) {
+			switchStrategy[p] = false;
 			// spread out at the door level
 			double door = 0.0;
 			if (n_pipers != 1) door = p * 1.8 / (n_pipers - 1) - 0.9;
@@ -84,13 +94,24 @@ public class Player implements pppp.sim.Player {
 			boolean neg_y = id == 2 || id == 3;
 			boolean swap  = id == 1 || id == 3;
 			// first and third position is at the door
-			door_pos = pos[p][0] = pos[p][2] = point(door, side * 0.5, neg_y, swap);
+			door_pos = sweep_pos[p][0] = pos[p][0] = pos[p][2] = point(door, side * 0.5, neg_y, swap);
 			// second position is chosen randomly in the rat moving area
 			pos[p][1] = null;
-
+			
+			//TODO to decide
 			pos[p][3] = point(door, side * 0.5 + 2, neg_y, swap);
-			// start with first position
+			
+			// sweep positions
+			int x = 0;
+			if (n_pipers != 0)
+				x = (side / (n_pipers + 1)) * (p + 1) - side / 2; 
+			sweep_pos[p][1] = point(x, side * 0.1, neg_y, swap);
+			sweep_pos[p][2] = point(0, side * 0.5 - 12, neg_y, swap);
+			sweep_pos[p][3] = point(0, side * 0.5 + 2, neg_y, swap);
+			sweep_pos_index[p] = 0;
 
+			// start with first position
+			// dense positions
 			if (density > density_threshold)
 				pos_index[p] = 1;
 			else
@@ -129,15 +150,49 @@ public class Player implements pppp.sim.Player {
 			Point[] rats, Move[] moves)
 	{
 		density = rats.length / (double) side;
-		if(density > density_threshold){
-			if(pipers[id].length >= 4)
-				denseStrategy(pipers, pipers_played, rats, moves);
+
+		for (int p = 0; p < pipers[id].length; p++) {
+			if(density > density_threshold){
+				if (!switchStrategy[p])
+					sweepStrategy(pipers, pipers_played, rats, moves);
+				else 
+					denseStrategy(pipers, pipers_played, rats, moves);
+				//if(pipers[id].length >= 4)
+				//	denseStrategy(pipers, pipers_played, rats, moves);
 			}
-		else 
-			sparseStrategy(pipers,pipers_played, rats, moves);
+			else 
+				sparseStrategy(pipers,pipers_played, rats, moves);
+		}
 	}
 
 
+	private void sweepStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
+		for (int p = 0 ; p != pipers[id].length ; ++p) {
+			Point src = pipers[id][p];
+			Point dst = sweep_pos[p][sweep_pos_index[p]];
+			
+			// if position is reached
+			if ( Math.abs(src.x - dst.x) < 0.000001 &&
+					Math.abs(src.y - dst.y) < 0.000001) {
+				if (sweep_pos_index[p] < 3) {
+					sweep_pos_index[p]++;
+				}
+				else {
+					if(withRats_door(src, rats)){
+						moves[p] = move(src, src, true);
+						continue;
+					}
+					else {
+						switchStrategy[p] = true;
+					}
+				}
+			}
+			else {
+				moves[p] = move(src, dst, sweep_pos_index[p] > 1);
+			}
+		}
+	}
+	
 	private void sparseStrategy(Point[][] pipers, boolean[][] pipers_played,
 			Point[] rats, Move[] moves) {
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
@@ -170,6 +225,7 @@ public class Player implements pppp.sim.Player {
 				if (pos_index[p] == 3) {
 					//TODO
 					if(withRats_door(src, rats)){
+						System.out.println("piper " + p + "should wait");
 						//piper_at_door = p;
 						moves[p] = move(src, src, true);
 						continue;
