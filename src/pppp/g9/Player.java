@@ -106,8 +106,8 @@ public class Player implements pppp.sim.Player {
 			if (n_pipers != 0)
 				x = (side / (n_pipers + 1)) * (p + 1) - side / 2; 
 			sweep_pos[p][1] = point(x, side * 0.1, neg_y, swap);
-			sweep_pos[p][2] = point(door, side * 0.5 - 12, neg_y, swap);
-			sweep_pos[p][3] = point(door, side * 0.5 + 2, neg_y, swap);
+			sweep_pos[p][2] = point(0, side * 0.5 - 12, neg_y, swap);
+			sweep_pos[p][3] = point(0, side * 0.5 + 2, neg_y, swap);
 			sweep_pos_index[p] = 0;
 			
 			// start with first position
@@ -182,7 +182,9 @@ public class Player implements pppp.sim.Player {
 						moves[p] = move(src, src, true);
 						continue;
 					}
-					switchStrategy[p] = true;
+					else {
+						switchStrategy[p] = true;
+					}
 				}
 			}
 			else {
