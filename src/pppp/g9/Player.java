@@ -39,6 +39,7 @@ public class Player implements pppp.sim.Player {
 	private int with_rat_threshold = 2;
 	private Point[][] sweep_pos;
 	private boolean[] switchStrategy;
+	private int sweep_piper_id_at_door;
 
 	// create move towards specified destination
 	private static Move move(Point src, Point dst, boolean play)
@@ -83,6 +84,7 @@ public class Player implements pppp.sim.Player {
 		
 		sweep_pos = new Point[n_pipers][4];
 		sweep_pos_index = new int[n_pipers];
+		sweep_piper_id_at_door = -1;
 		
 
 		for (int p = 0 ; p != n_pipers ; ++p) {
@@ -153,10 +155,15 @@ public class Player implements pppp.sim.Player {
 
 		for (int p = 0; p < pipers[id].length; p++) {
 			if(density > density_threshold){
-				if (!switchStrategy[p])
-					sweepStrategy(pipers, pipers_played, rats, moves);
-				else 
-					denseStrategy(pipers, pipers_played, rats, moves);
+				if (!switchStrategy[p]){
+					
+					sweepStrategy(pipers, pipers_played, rats, moves, p);
+					}
+				else {
+					if( p == 0)
+					debug("dense " + p);
+					denseStrategy(pipers, pipers_played, rats, moves, p);
+					}
 				//if(pipers[id].length >= 4)
 				//	denseStrategy(pipers, pipers_played, rats, moves);
 			}
@@ -164,10 +171,13 @@ public class Player implements pppp.sim.Player {
 				sparseStrategy(pipers,pipers_played, rats, moves);
 		}
 	}
+	private static void debug(String s){
+		System.out.println("debug: " + s);
+	}
 
-
-	private void sweepStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
-		for (int p = 0 ; p != pipers[id].length ; ++p) {
+	private void sweepStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves, int p) {
+		//for (int p = 0 ; p != pipers[id].length ; ++p) {
+			//if(switchStrategy[p]) continue;
 			Point src = pipers[id][p];
 			Point dst = sweep_pos[p][sweep_pos_index[p]];
 			
@@ -178,11 +188,19 @@ public class Player implements pppp.sim.Player {
 					sweep_pos_index[p]++;
 				}
 				else {
-					if(withRats_door(src, rats)){
+					if(!withRats_door(src, rats)){
+						if(p == sweep_piper_id_at_door){
+							debug("leaving" + " " + p);
+							sweep_piper_id_at_door = -1;
+							}
+						switchStrategy[p] = true;
+					}else if(withRats_door(src, rats) && (sweep_piper_id_at_door == -1 || sweep_piper_id_at_door == p)){
+						debug("piper " + p + "should wait");
+						sweep_piper_id_at_door = p;
 						moves[p] = move(src, src, true);
-						continue;
-					}
-					else {
+						//continue;
+					}else{
+						debug("piper" + p + " don't need to wait");
 						switchStrategy[p] = true;
 					}
 				}
@@ -190,7 +208,7 @@ public class Player implements pppp.sim.Player {
 			else {
 				moves[p] = move(src, dst, sweep_pos_index[p] > 1);
 			}
-		}
+		//}
 	}
 	
 	private void sparseStrategy(Point[][] pipers, boolean[][] pipers_played,
@@ -260,8 +278,8 @@ public class Player implements pppp.sim.Player {
 	}
 
 	public void denseStrategy(Point[][] pipers, boolean[][] pipers_played,
-			Point[] rats, Move[] moves){
-		for(int p = 0; p < pipers[id].length; p++){
+			Point[] rats, Move[] moves, int p){
+		//for(int p = 0; p < pipers[id].length; p++){
 			Point src = pipers[id][p];
 			Point dst;
 			if(p % 2 == 0){
@@ -276,7 +294,7 @@ public class Player implements pppp.sim.Player {
 					if(far_pos_index[p] == 3){
 						if(!samePos(src, pipers[id][p + 1])){
 							moves[p] = move(src, src, true);
-							continue;
+							//continue;
 						}
 						far_pos_index[p] = 1;
 					}
@@ -290,7 +308,7 @@ public class Player implements pppp.sim.Player {
 					if(near_pos_index[p] == 3){
 						if(withRats(src, rats)){
 							moves[p] = move(src, src, true);
-							continue;
+							//continue;
 						}
 						near_pos_index[p] = 0;
 					}
@@ -306,7 +324,7 @@ public class Player implements pppp.sim.Player {
 				moves[p] = move(src, dst, near_pos_index[p] > 1);
 			}
 
-		}
+		//}
 	}
 	public boolean samePos(Point p1, Point p2){
 		if(Math.abs(p1.x - p2.x) < 0.0001 && Math.abs(p1.y - p2.y) < 0.0001) return true;
