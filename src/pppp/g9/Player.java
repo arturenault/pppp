@@ -638,18 +638,24 @@ public class Player implements pppp.sim.Player {
         //		return false;
         //	}
         public boolean onePiperCanHelp(Point[][] pipers, Point rat) {
-            int density = 0;
+            int friends = 0;
+            int max_rival = 0;
             for (int j = 0; j < pipers.length; j++) {
+                int rival = 0;
                 for (int k = 0; k < pipers[j].length; k++) {
                     if (within(pipers[j][k], rat, 10)) {
                         if (j == id) {
-                            density++;
+                            friends++;
                         } else {
-                            density--;
+                            rival++;
                         }
                     }
                 }
+                if(rival > max_rival) {
+                    max_rival = rival;
+                }
             }
+            int density = friends - max_rival;
             return density >= -1;
         }
 
