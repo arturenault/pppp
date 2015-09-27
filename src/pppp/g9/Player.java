@@ -114,7 +114,7 @@ public class Player implements pppp.sim.Player {
 
 			// start with first position
 			// dense positions
-			if (density > density_threshold)
+			if (density > density_threshold && n_pipers > 1)
 				pos_index[p] = 1;
 			else
 				pos_index[p] = 0;
@@ -156,21 +156,24 @@ public class Player implements pppp.sim.Player {
 		for (int p = 0; p < pipers[id].length; p++) {
 			if(density > density_threshold){
 				if (!switchStrategy[p]){
-					
+
 					sweepStrategy(pipers, pipers_played, rats, moves, p);
-					}
+				}
 				else {
 					if( p == 0)
-					debug("dense " + p);
-					denseStrategy(pipers, pipers_played, rats, moves, p);
-					}
-				//if(pipers[id].length >= 4)
-				//	denseStrategy(pipers, pipers_played, rats, moves);
+						//debug("dense " + p);
+					if (pipers[id].length > 1)
+						denseStrategy(pipers, pipers_played, rats, moves, p);
+					else
+						sparseStrategy(pipers,pipers_played, rats, moves);
+				}
 			}
 			else 
 				sparseStrategy(pipers,pipers_played, rats, moves);
 		}
+
 	}
+	
 	private static void debug(String s){
 		System.out.println("debug: " + s);
 	}
