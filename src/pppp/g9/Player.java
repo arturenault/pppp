@@ -48,6 +48,7 @@ public class Player implements pppp.sim.Player {
     private ArrayList<Grid> gridlist;
     private ArrayList<Piper> piperlist;
     private Point[][] cell_pos = null;
+    private Double[] last_weight;
 
     // create move towards specified destination
     private static Move move(Point src, Point dst, boolean play)
@@ -95,6 +96,7 @@ public class Player implements pppp.sim.Player {
         sweep_piper_id_at_door = -1;
 
         cell_pos = new Point [n_pipers][4];
+        last_weight = new Double[n_pipers];
 
         for (int p = 0 ; p != n_pipers ; ++p) {
             switchStrategy[p] = false;
@@ -122,6 +124,7 @@ public class Player implements pppp.sim.Player {
             sweep_pos_index[p] = 0;
             cell_pos[p][0] = cell_pos[p][1] = cell_pos[p][2] = point(0, side * 0.5, neg_y, swap);
             cell_pos[p][3] = point(0, side * 0.5+2.1, neg_y, swap);
+            last_weight[p] = 0.0;
             // start with first position
             // dense positions
             //			if (density > density_threshold)
@@ -176,6 +179,13 @@ public class Player implements pppp.sim.Player {
         }
     }
 
+    private boolean withRats_dist(Point piper_pos, Point[] rats,int dist){ 
+        for(int i = 0 ; i < rats.length; i++){
+            if(within(piper_pos, rats[i], dist))
+                return true;
+        }
+        return false;
+    }
     private double distance (Point a, Point b){
 
         return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
@@ -304,7 +314,7 @@ public class Player implements pppp.sim.Player {
         for(int p=0;p<pipers[id].length;p++){
             if (pos_index[p] == 2){
                 Piper current_one = piperlist.get(p);
-                if (!withRats(piperlist.get(p).pos, rats) /*|| current_one.rats < max_weight / 4 */)
+                if (!withRats_dist(piperlist.get(p).pos, rats, 7) /*|| current_one.rats < max_weight / 4 */)
                     pos_index[p]=1;
                 else{
                     gridlist.add(new Grid(current_one.pos,current_one.rats/2));
@@ -342,12 +352,18 @@ public class Player implements pppp.sim.Player {
                     }
                 }
             }
-            cell_pos[free_pipers.get(piper_id).index][1] = cell.center;
-            if_free[piper_id] = false;
-            if (cell.opponent_pipers > 0)
-                cell.opponent_pipers--;
-            else
-                cell.rats /=2;
+            if (piper_num -i < cell.opponent_pipers){
+            	cell.rats = 0.0;
+            }
+            else{
+            		cell_pos[free_pipers.get(piper_id).index][1] = cell.center;
+            		if_free[piper_id] = false;
+            		last_weight[free_pipers.get(piper_id).index] = cell.rats;
+            		if (cell.opponent_pipers > 0)
+            			cell.opponent_pipers--;
+            		else
+            			cell.rats /=2;
+            }
             //System.out.println("piper("+free_pipers.get(piper_id).index+"):"+ max_weight * Math.pow(100+this.distance(free_pipers.get(piper_id).pos,cell.center),0.1));
             sorted_grid.add(cell);
         }
@@ -408,6 +424,9 @@ public class Player implements pppp.sim.Player {
                         pos_index[p] = 0;
                     else
                         isPiperAtGate =true;
+                }
+                if (pos_index[p] == 2) {
+                	last_weight[p] = 0.0;
                 }
                 dst = cell_pos[p][pos_index[p]];
                 // generate a new position if random
@@ -714,8 +733,8 @@ public class Player implements pppp.sim.Player {
     class Piper {
         Point pos;
         Boolean playing;
-        double rats =0;
-        double opponent_pipers =0;
+        double rats =0.0;
+        double opponent_pipers =0.0;
         int index;
         public Piper(Point pos, boolean playing, int index) {
             this.pos = pos;
