@@ -1,6 +1,6 @@
 /********************************************
  * Group 9
- * Artur Renault, Jing Guo, Cathy Jin and Liuyang Wang
+ * Artur Renault, Jing Guo, Cathy Jin
  *
  * Pied piper player class; based off g0.
  *
@@ -25,7 +25,7 @@ public class Player implements pppp.sim.Player {
     private double density = 0;
     private double density_threshold = 0.3;
     private int side = 0;
-    private int piper_at_door = -1;
+    //private int piper_at_door = -1;
     private int[] pos_index = null;
     private int[] near_pos_index;
     private int[] far_pos_index;
@@ -353,16 +353,16 @@ public class Player implements pppp.sim.Player {
                 }
             }
             if (piper_num -i < cell.opponent_pipers){
-                cell.rats = 0.0;
+            	cell.rats = 0.0;
             }
             else{
-                cell_pos[free_pipers.get(piper_id).index][1] = cell.center;
-                if_free[piper_id] = false;
-                last_weight[free_pipers.get(piper_id).index] = cell.rats;
-                if (cell.opponent_pipers > 0)
-                    cell.opponent_pipers--;
-                else
-                    cell.rats /=2;
+            		cell_pos[free_pipers.get(piper_id).index][1] = cell.center;
+            		if_free[piper_id] = false;
+            		last_weight[free_pipers.get(piper_id).index] = cell.rats;
+            		if (cell.opponent_pipers > 0)
+            			cell.opponent_pipers--;
+            		else
+            			cell.rats /=2;
             }
             //System.out.println("piper("+free_pipers.get(piper_id).index+"):"+ max_weight * Math.pow(100+this.distance(free_pipers.get(piper_id).pos,cell.center),0.1));
             sorted_grid.add(cell);
@@ -426,7 +426,7 @@ public class Player implements pppp.sim.Player {
                         isPiperAtGate =true;
                 }
                 if (pos_index[p] == 2) {
-                    last_weight[p] = 0.0;
+                	last_weight[p] = 0.0;
                 }
                 dst = cell_pos[p][pos_index[p]];
                 // generate a new position if random
@@ -446,7 +446,7 @@ public class Player implements pppp.sim.Player {
         }
     }
     private static void debug(String s){
-        // System.out.println("debug: " + s);
+       // System.out.println("debug: " + s);
     }
     private void sweepStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
         for (int p = 0 ; p != pipers[id].length ; ++p) {
@@ -466,7 +466,6 @@ public class Player implements pppp.sim.Player {
                             sweep_piper_id_at_door = -1;
                         }
                         switchStrategy[p] = true;
-                        sweepover = true;
                     }else if(withRats_door(src, rats) && (withRivalNearDoor(pipers) || sweep_piper_id_at_door == -1 || sweep_piper_id_at_door == p)){
                         debug("piper " + p + "should wait");
                         sweep_piper_id_at_door = p;
@@ -512,8 +511,10 @@ public class Player implements pppp.sim.Player {
                 ++pos_index[p];
 
                 if (pos_index[p] == 4) {
+                    //TODO
                     if(withRats_door(src, rats)){
-                        piper_at_door = p;
+                        //System.out.println("piper " + p + "should wait");
+                        //piper_at_door = p;
                         moves[p] = move(src, src, true);
                         pos_index[p] = 3;
                         continue;
@@ -522,11 +523,11 @@ public class Player implements pppp.sim.Player {
                         pos_index[p] = 0;
                     }
 
-                    if (piper_at_door >= 0 && piper_at_door != p) {
-                        pos_index[p] = 1;
-                    } else {
-                        piper_at_door = p;
-                    }
+                    //					if (piper_at_door >= 0 && piper_at_door != p) {
+                    //						pos_index[p] = 1;
+                    //					} else {
+                    //						piper_at_door = p;
+                    //					}
                 }
 
                 if (pos_index[p] == 1) {
@@ -709,14 +710,14 @@ public class Player implements pppp.sim.Player {
             return calDistance(p1, p2) <= 1;
         }
         public boolean withRivalNearDoor(Point[][] pipers){
-            for(int i = 0; i < pipers.length; i++){
-                if(i == id) continue;
-                for(int j = 0; j < pipers[0].length; j++){
-                    if(calDistance(pos[0][0], pipers[i][j]) <= 20)
-                        return true;        				
-                }
-            }
-            return false;
+        	for(int i = 0; i < pipers.length; i++){
+        		if(i == id) continue;
+        		for(int j = 0; j < pipers[0].length; j++){
+        			if(calDistance(pos[0][0], pipers[i][j]) <= 20)
+        				return true;        				
+        		}
+        	}
+        	return false;
         }
     }
 

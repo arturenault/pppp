@@ -10,4 +10,9 @@ public class Point {
 		this.x = x;
 		this.y = y;
 	}
+
+	public double distance(Point p)
+	{
+		return Math.hypot(x - p.x, y - p.y);
+	}
 }
