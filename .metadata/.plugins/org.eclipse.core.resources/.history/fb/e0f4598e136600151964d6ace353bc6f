@@ -466,7 +466,6 @@ public class Player implements pppp.sim.Player {
                             sweep_piper_id_at_door = -1;
                         }
                         switchStrategy[p] = true;
-                        sweepover = true;
                     }else if(withRats_door(src, rats) && (withRivalNearDoor(pipers) || sweep_piper_id_at_door == -1 || sweep_piper_id_at_door == p)){
                         debug("piper " + p + "should wait");
                         sweep_piper_id_at_door = p;

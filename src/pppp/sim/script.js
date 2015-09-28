@@ -11,8 +11,8 @@ function draw_plaza(ratio)
 	var inner_side = canvas.width - outer_side * 2.0;
 	if (inner_side < outer_side)
 		throw "Invalid inner to outer square ratio: " + ratio;
-	var door_length = outer_side * 0.2;
 	// corner rectangles
+	var I = inner_side;
 	var O = outer_side;
 	var S = inner_side + outer_side;
 	ctx.fillStyle = "black";
@@ -20,23 +20,24 @@ function draw_plaza(ratio)
 	ctx.fillRect(0, S, O, O);
 	ctx.fillRect(S, 0, O, O);
 	ctx.fillRect(S, S, O, O);
-	// lines for entrances
-	var A = outer_side;
-	var B = outer_side + (inner_side - door_length) * 0.5;
-	var C = outer_side + (inner_side + door_length) * 0.5;
-	var D = outer_side + inner_side;
-	var X = outer_side - 1.5;
-	var Y = outer_side + 1.5 + inner_side;
-	var L = [[X, A, X, B], [X, C, X, D],
-			 [Y, A, Y, B], [Y, C, Y, D],
-			 [A, X, B, X], [C, X, D, X],
-			 [A, Y, B, Y], [C, Y, D, Y]];
-	for (var i = 0 ; i != 8 ; ++i) {
+	// lines for entrances and walls
+	var W = 3;
+	var D = O * 0.2;
+	var A = O + (I - D) * 0.5;
+	var B = O + (I + D) * 0.5;
+	var X = O     - W * 0.5;
+	var Y = O + I + W * 0.5;
+	var M =               W * 0.5;
+	var N = O * 2.0 + I - W * 0.5;
+	var L = [[X, O, X, A], [X, B, X, S], [M, O, M, S],
+			 [Y, O, Y, A], [Y, B, Y, S], [N, O, N, S],
+			 [O, X, A, X], [B, X, S, X], [O, M, S, M],
+			 [O, Y, A, Y], [B, Y, S, Y], [O, N, S, N]];
+	for (var i = 0 ; i != L.length ; ++i) {
 		ctx.beginPath();
 		ctx.moveTo(L[i][0], L[i][1]);
 		ctx.lineTo(L[i][2], L[i][3]);
-		ctx.closePath();
-		ctx.lineWidth = 3;
+		ctx.lineWidth = W;
 		ctx.strokeStyle = "black";
 		ctx.stroke();
 	}
@@ -59,19 +60,20 @@ function draw_groups(ratio, groups)
 		throw "Invalid inner to outer square ratio: " + ratio;
 	// render group score
 	var colors = ["red", "green", "blue", "purple"];
-	var A = outer_side * 0.5;
-	var B = outer_side * 1.5;
-	var C = outer_side * 1.5 + inner_side;
+	var A = outer_side * 0.2;
+	var B = outer_side * 2.5;
+	var C = outer_side * 1.8 + inner_side;
 	var P = [[B, A], [C, B], [B, C], [A, B]];
-	for (var i = 0 ; i != 4 ; ++i) {
+	var L = ["left", "right", "left", "left"];
+	for (var i = 0 ; i != P.length ; ++i) {
 		if (groups[i].length != 2)
 			 throw "Invalid group array length: " + groups[i].length;
 		var x = P[i][0];
 		var y = P[i][1];
 		var name = groups[i][0];
 		var score = Math.round(groups[i][1]);
-		ctx.font = "16px Arial";
-		ctx.textAlign = "center";
+		ctx.font = "14px Arial";
+		ctx.textAlign = L[i];
 		ctx.strokeStyle = "black";
 		ctx.strokeText(name + ": " + score, x, y);
 		ctx.fillStyle = colors[i];
@@ -117,7 +119,6 @@ function draw_pipers(ratio, pipers)
 			// draw a circle and fill with group color
 			ctx.beginPath();
 			ctx.arc(x, y, 4, 0, Math.PI * 2.0);
-			ctx.closePath();
 			ctx.lineWidth = 3;
 			ctx.strokeStyle = "black";
 			ctx.stroke();
@@ -127,14 +128,12 @@ function draw_pipers(ratio, pipers)
 				// draw inner circle
 				ctx.beginPath();
 				ctx.arc(x, y, inner_radius, 0, Math.PI * 2.0);
-				ctx.closePath();
 				ctx.lineWidth = 1;
 				ctx.strokeStyle = colors[i];
 				ctx.stroke();
 				// draw outer circle
 				ctx.beginPath();
 				ctx.arc(x, y, outer_radius, 0, Math.PI * 2.0);
-				ctx.closePath();
 				ctx.lineWidth = 1;
 				ctx.strokeStyle = colors[i];
 				ctx.stroke();
@@ -177,7 +176,6 @@ function draw_rats(rats)
 		// draw circles for body of rat
 		ctx.beginPath();
 		ctx.arc(x, y, 2.5, 0, Math.PI * 2.0);
-		ctx.closePath();
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = "black";
 		ctx.stroke();
@@ -188,7 +186,6 @@ function draw_rats(rats)
 		// draw circle for head of rat
 		ctx.beginPath();
 		ctx.arc(x + dx * 4.5, y + dy * 4.5, 1, 0, Math.PI * 2.0);
-		ctx.closePath();
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = "black";
 		ctx.stroke();
@@ -200,7 +197,6 @@ function draw_rats(rats)
 		ctx.beginPath();
 		ctx.moveTo(x - dx * 3.0, y - dy * 3.0);
 		ctx.lineTo(x - dx * 9.5, y - dy * 9.5);
-		ctx.closePath();
 		ctx.lineWidth = 0.75;
 		ctx.strokeStyle = "black";
 		ctx.stroke();
@@ -263,16 +259,15 @@ function process(data)
 	              parse_pipers(data[4])];
 	var rats = parse_rats(data[5]);
 	var refresh = parse_number(data[6]);
-	if (refresh < 0.0) refresh = -1;
-	else refresh = Math.round(refresh);
 	draw_plaza(ratio);
 	draw_groups(ratio, groups);
 	draw_pipers(ratio, pipers);
 	draw_rats(rats);
-	return refresh;
+	if (refresh < 0.0) return -1;
+	return Math.round(refresh);
 }
 
-function ajax(version)
+function ajax(retries, timeout)
 {
 	var xhr = new XMLHttpRequest();
 	xhr.onload = (function() {
@@ -282,34 +277,27 @@ function ajax(version)
 				throw "Incomplete HTTP request: " + xhr.readyState;
 			if (xhr.status != 200)
 				throw "Invalid HTTP status: " + xhr.status;
-			if (xhr.responseText)
-				refresh = process(xhr.responseText);
-			else
-				console.log("Ignoring AJAX retry: " + version);
-		} catch (message) {
-			console.log("Application error: " + message);
-			console.log(xhr.responeText);
-			alert(message);
-		}
+			refresh = process(xhr.responseText);
+		} catch (message) { alert(message); }
 		if (refresh >= 0)
-			setTimeout(function() { ajax(version + 1); }, refresh);
+			setTimeout(function() { ajax(10, 100); }, refresh);
 	});
-	xhr.onabort = (function() {
-		console.log("AJAX abort: " + version);
-		ajax(version);
+	xhr.onabort   = (function() {
+		if (retries > 0)
+			ajax(retries - 1, timeout * 2);
 	});
-	xhr.onerror = (function() {
-		console.log("AJAX error: " + version);
-		ajax(version);
+	xhr.onerror   = (function() {
+		if (retries > 0)
+			ajax(retries - 1, timeout * 2);
 	});
 	xhr.ontimeout = (function() {
-		console.log("AJAX timeout: " + version);
-		ajax(version);
+		if (retries > 0)
+			ajax(retries - 1, timeout * 2);
 	});
-	xhr.open("GET", version + ".dat", true);
+	xhr.open("GET", "data.txt", true);
 	xhr.responseType = "text";
 	xhr.timeout = 100;
 	xhr.send();
 }
 
-ajax(0);
+ajax(10, 100);
