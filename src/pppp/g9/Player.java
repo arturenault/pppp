@@ -36,7 +36,7 @@ public class Player implements pppp.sim.Player {
     private Point[] piper_rats;
     private Point[][] near_pos;
     private Point[][] far_pos;
-    private int with_rat_threshold = 2;
+    private int with_rat_threshold = 10;
     private Point[][] sweep_pos;
     private boolean[] switchStrategy;
     private int sweep_piper_id_at_door;
@@ -82,12 +82,7 @@ public class Player implements pppp.sim.Player {
         density = rats.length / (double) side;
         pos = new Point [n_pipers][4];
         pos_index = new int [n_pipers];
-        near_pos_index = new int[n_pipers];
-        far_pos_index = new int[n_pipers];
         piper_rats = new Point[n_pipers];
-
-        near_pos = new Point[n_pipers][4];
-        far_pos = new Point[n_pipers][5];
 
         switchStrategy = new boolean[n_pipers];
 
@@ -111,8 +106,9 @@ public class Player implements pppp.sim.Player {
             // second position is chosen randomly in the rat moving area
             pos[p][1] = null;
 
-            //TODO to decide
-            pos[p][3] = point(door, side * 0.5 + 2, neg_y, swap);
+            // third position is slightly inside the door
+            // TODO find best position
+            pos[p][3] = point(door, side * 0.5 + 10, neg_y, swap);
 
             // sweep positions
             int x = 0;
@@ -125,36 +121,6 @@ public class Player implements pppp.sim.Player {
             cell_pos[p][0] = cell_pos[p][1] = cell_pos[p][2] = point(0, side * 0.5, neg_y, swap);
             cell_pos[p][3] = point(0, side * 0.5+2.1, neg_y, swap);
             last_weight[p] = 0.0;
-            // start with first position
-            // dense positions
-            //			if (density > density_threshold)
-            //				pos_index[p] = 1;
-            //			else
-            pos_index[p] = 0;
-
-            far_pos_index[p] = 0;
-            near_pos_index[p] = 0;
-            if(p % 2 == 0){
-                far_pos[p][0] = door_pos; 
-                if(p < n_pipers/2){
-                    far_pos[p][1] = point(-side / 4, -side / 2 + 10, neg_y, swap);
-                    far_pos[p][2] = point(-side / 2 + 10, -side / 4, neg_y, swap);
-                    far_pos[p][3] = point(-side / 4, 0, neg_y, swap);
-                } else {
-                    far_pos[p][1] = point(side / 4, -side / 2 + 10, neg_y, swap);
-                    far_pos[p][2] = point(side / 2 - 10, -side / 4, neg_y, swap);
-                    far_pos[p][3] = point(side / 4, 0, neg_y, swap);
-                }
-            } else{
-                near_pos[p][0] = near_pos[p][2] = door_pos;
-                if(p <= n_pipers/2){
-                    near_pos[p][1] = point(-side / 4, 0, neg_y, swap);
-                    near_pos[p][3] = point(door, side * 0.5 + 2, neg_y, swap);
-                }else{
-                    near_pos[p][1] = point(side / 4, 0, neg_y, swap);
-                    near_pos[p][3] = point(door, side * 0.5 + 2, neg_y, swap);
-                }
-            }
         }
     }
     public static void debug(Point point){
@@ -171,11 +137,10 @@ public class Player implements pppp.sim.Player {
                 sweepStrategy(pipers, pipers_played, rats, moves);
             else {
                 cellStrategy(pipers, pipers_played, rats, moves);
-                //denseStrategy(pipers, pipers_played, rats, moves);				
             }
         }
         else {
-//        	System.out.println("sparse");
+            //        	System.out.println("sparse");
             sparseStrategy(pipers, pipers_played, rats, moves);
         }
     }
@@ -301,13 +266,6 @@ public class Player implements pppp.sim.Player {
                             }
                 }
             }
-            //			for(int i=grid_num-1;i>=0;i--){
-            //			for(int j=0;j<grid_num;j++){
-            //				System.out.print(String.format("%1$.2f",gridlist.get(i*5+j).rats)+"\t");
-            //			}
-            //			System.out.println();
-            //		}
-            //		System.out.println();
         }
 
         //if the piper lose all its rats when come back to the gate, stop going back
@@ -326,6 +284,7 @@ public class Player implements pppp.sim.Player {
         gridlist.sort(null);
         return;
     }
+
     //allocate jobs to different pipers
     private void allocate_destination(ArrayList<Grid> gridlist, ArrayList<Piper> free_pipers){
         int piper_num = free_pipers.size();
@@ -509,19 +468,12 @@ public class Player implements pppp.sim.Player {
                     pos_index[p] == 3 && !withRats_door(door_pos, rats)) { 
 
                 // get next position
-                ++pos_index[p];
+                if (++pos_index[p] == 4) {
+                    pos_index[p] = 0;
+                    piper_at_door = -1;
+                }
 
-                if (pos_index[p] == 4) {
-                    if(withRats_door(src, rats)){
-                        piper_at_door = p;
-                        moves[p] = move(src, src, true);
-                        pos_index[p] = 3;
-                        continue;
-                    }
-                    else {
-                        pos_index[p] = 0;
-                    }
-
+                if (pos_index[p] == 3) {
                     if (piper_at_door >= 0 && piper_at_door != p) {
                         pos_index[p] = 1;
                     } else {
@@ -540,7 +492,8 @@ public class Player implements pppp.sim.Player {
                     if (within(dst, door_pos, 10)) {
                         // if this returned a rat within the door, that must mean
                         // all rats are at his door. make all pipers bring rats in
-                        pos_index[p] = 3; 
+                        pos_index[p] = 3;
+                        dst = pos[p][pos_index[p]];
                     }
                 }
                     }
@@ -549,59 +502,11 @@ public class Player implements pppp.sim.Player {
         }
     }
 
-    public void denseStrategy(Point[][] pipers, boolean[][] pipers_played,
-            Point[] rats, Move[] moves){
-        for(int p = 0; p < pipers[id].length; p++){
-            Point src = pipers[id][p];
-            Point dst;
-            if(p % 2 == 0){
-                dst = far_pos[p][far_pos_index[p]];
-            }else{
-                dst = near_pos[p][near_pos_index[p]];
-            }
-            if( Math.abs(src.x - dst.x) < 0.000001 &&
-                    Math.abs(src.y - dst.y) < 0.000001){
-                if(p % 2 == 0){
-
-                    if(far_pos_index[p] == 3){
-                        if(!samePos(src, pipers[id][p + 1])){
-                            moves[p] = move(src, src, true);
-                            continue;
-                        }
-                        far_pos_index[p] = 1;
-                    }
-                    else {
-                        ++far_pos_index[p];
-                    }
-
-                    dst = far_pos[p][far_pos_index[p]];
-
-                }else{
-                    if(near_pos_index[p] == 3){
-                        if(withRats(src, rats)){
-                            moves[p] = move(src, src, true);
-                            continue;
-                        }
-                        near_pos_index[p] = 0;
-                    }
-                    else {
-                        ++near_pos_index[p];
-                    }
-                    dst = near_pos[p][near_pos_index[p]];	
-                }
-                    }
-            if(p % 2 == 0){
-                moves[p] = move(src, dst, far_pos_index[p] > 1);
-            }else{
-                moves[p] = move(src, dst, near_pos_index[p] > 1);
-            }
-
-        }
-    }
     public boolean samePos(Point p1, Point p2){
         if(Math.abs(p1.x - p2.x) < 0.0001 && Math.abs(p1.y - p2.y) < 0.0001) return true;
         return false;
     }
+
     public Point getNearestRat(Point piper_pos, Point[] rats, int piper_index, Point[][] pipers){
         double min = Double.MAX_VALUE;
         int min_index = -1;
@@ -609,145 +514,146 @@ public class Player implements pppp.sim.Player {
 
             // ignore rats near door if there is already a piper there 
             if (!within(door_pos, rats[i], 10) || (within(door_pos, rats[i], 10) && !withRivalNearDoor(pipers))) {
-                //if (piper_at_door < 0 || !within(door_pos, rats[i], 10)) {
-                double dis = calDistance(piper_pos, rats[i]);
+                if (piper_at_door < 0 || !within(door_pos, rats[i], 10)) {
+                    double dis = calDistance(piper_pos, rats[i]);
 
-                // if piper_rats[piper_index] is null, then the piper just got out of the door
-                if(dis < min && (piper_rats[piper_index] != null || dis > 10)){
-                    boolean already_assigned = false;
+                    // if piper_rats[piper_index] is null, then the piper just got out of the door
+                    if(dis < min && (piper_rats[piper_index] != null || dis > 10)){
+                        boolean already_assigned = false;
 
-                    // check that another player isn't already handling this rat
-                    for (int j = 0; j < piper_rats.length; j++) {
-                        if (piper_rats[j] != null && sameRat(rats[i], piper_rats[j])) {
-                            if (j == piper_index) {
-                                // This piper owns this rat, update position of rat
-                                piper_rats[j] = rats[i];
-                                return rats[i];
+                        // check that another player isn't already handling this rat
+                        for (int j = 0; j < piper_rats.length; j++) {
+                            if (piper_rats[j] != null && sameRat(rats[i], piper_rats[j])) {
+                                if (j == piper_index) {
+                                    // This piper owns this rat, update position of rat
+                                    piper_rats[j] = rats[i];
+                                    return rats[i];
 
-                                // Otherwise someone else does
-                            } else {
-                                already_assigned = true;
-                                break;
+                                    // Otherwise someone else does
+                                } else {
+                                    already_assigned = true;
+                                    break;
+                                }
                             }
                         }
-                    }
 
 
-                    // if nobody else is handling this rat, this piper can take it.
-                    if (!already_assigned && onePiperCanHelp(pipers, rats[i])) {
-                        min = dis;
-                        min_index = i;
+                        // if nobody else is handling this rat, this piper can take it.
+                        if (!already_assigned && onePiperCanHelp(pipers, rats[i])) {
+                            min = dis;
+                            min_index = i;
+                        }
                     }
                 }
-                }
+            }
             if (min_index == -1) {
                 min_index = gen.nextInt(rats.length);
             }
-            }
-            piper_rats[piper_index] = rats[min_index];
-            return rats[min_index];
         }
-        //
-        //	public boolean nearTeammate(Point piper_pos, Point[] other_pipers) {
-        //		for (int i = 0; i < other_pipers.length; i++) {
-        //			if(within(piper_pos, other_pipers[i]), ) 
-        //				return true;
-        //		}
-        //		return false;
-        //	}
-        public boolean onePiperCanHelp(Point[][] pipers, Point rat) {
-            int friends = 0;
-            int max_rival = 0;
-            for (int j = 0; j < pipers.length; j++) {
-                int rival = 0;
-                for (int k = 0; k < pipers[j].length; k++) {
-                    if (within(pipers[j][k], rat, 10)) {
-                        if (j == id) {
-                            friends++;
-                        } else {
-                            rival++;
-                        }
+        piper_rats[piper_index] = rats[min_index];
+        return rats[min_index];
+    }
+    //
+    //	public boolean nearTeammate(Point piper_pos, Point[] other_pipers) {
+    //		for (int i = 0; i < other_pipers.length; i++) {
+    //			if(within(piper_pos, other_pipers[i]), ) 
+    //				return true;
+    //		}
+    //		return false;
+    //	}
+    public boolean onePiperCanHelp(Point[][] pipers, Point rat) {
+        int friends = 0;
+        int max_rival = 0;
+        for (int j = 0; j < pipers.length; j++) {
+            int rival = 0;
+            for (int k = 0; k < pipers[j].length; k++) {
+                if (within(pipers[j][k], rat, 10)) {
+                    if (j == id) {
+                        friends++;
+                    } else {
+                        rival++;
                     }
                 }
-                if(rival > max_rival) {
-                    max_rival = rival;
-                }
             }
-            int density = friends - max_rival;
-            return density >= -1;
+            if(rival > max_rival) {
+                max_rival = rival;
+            }
         }
+        int density = friends - max_rival;
+        return density >= -1;
+    }
 
-        public boolean withRats(Point piper_pos, Point[] rats){ 
-            for(int i = 0 ; i < rats.length; i++){
-                if(within(piper_pos, rats[i], 3))
-                    return true;
-            }
-            return false;
-        }
-        public boolean withRats_door(Point piper_pos, Point[] rats){ 
-            for(int i = 0 ; i < rats.length; i++){
-                if(within(piper_pos, rats[i], 10))
-                    return true;
-            }
-            return false;
-        }
-
-        public boolean within(Point p1, Point p2, int distance){
-            double length = calDistance(p1, p2);
-            if(length <= distance)
+    public boolean withRats(Point piper_pos, Point[] rats){ 
+        for(int i = 0 ; i < rats.length; i++){
+            if(within(piper_pos, rats[i], with_rat_threshold))
                 return true;
-            return false;
         }
+        return false;
+    }
+    public boolean withRats_door(Point piper_pos, Point[] rats){ 
+        for(int i = 0 ; i < rats.length; i++){
+            if(within(piper_pos, rats[i], 10))
+                return true;
+        }
+        return false;
+    }
 
-        public double calDistance(Point p1, Point p2){
-            double dx = p1.x - p2.x;
-            double dy = p1.y - p2.y;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
+    public boolean within(Point p1, Point p2, int distance){
+        double length = calDistance(p1, p2);
+        if(length <= distance)
+            return true;
+        return false;
+    }
 
-        public boolean sameRat(Point p1, Point p2) {
-            return calDistance(p1, p2) <= 1;
-        }
-        public boolean withRivalNearDoor(Point[][] pipers){
-            for(int i = 0; i < pipers.length; i++){
-                if(i == id) continue;
-                for(int j = 0; j < pipers[0].length; j++){
-                    if(calDistance(pos[0][0], pipers[i][j]) <= 20)
-                        return true;        				
-                }
+    public double calDistance(Point p1, Point p2){
+        double dx = p1.x - p2.x;
+        double dy = p1.y - p2.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    public boolean sameRat(Point p1, Point p2) {
+        return calDistance(p1, p2) <= 1;
+    }
+    public boolean withRivalNearDoor(Point[][] pipers){
+        for(int i = 0; i < pipers.length; i++){
+            if(i == id) continue;
+            for(int j = 0; j < pipers[0].length; j++){
+                if(calDistance(pos[0][0], pipers[i][j]) <= 20)
+                    return true;        				
             }
-            return false;
         }
+        return false;
+    }
+}
+
+
+class Grid implements Comparable<Grid>{
+    Point center;
+    Double rats;
+    Double opponent_pipers =0.0;
+    public Grid(Point center, double rats) {
+        this.center = center;
+        this.rats = rats;
     }
 
-
-    class Grid implements Comparable<Grid>{
-        Point center;
-        Double rats;
-        Double opponent_pipers =0.0;
-        public Grid(Point center, double rats) {
-            this.center = center;
-            this.rats = rats;
-        }
-
-        public int compareTo(Grid g1) {
-            int ans =  g1.rats.compareTo(this.rats);
-            if (ans == 0)
-                return this.opponent_pipers.compareTo(g1.opponent_pipers);
-            else
-                return ans;
-        }
+    public int compareTo(Grid g1) {
+        int ans =  g1.rats.compareTo(this.rats);
+        if (ans == 0)
+            return this.opponent_pipers.compareTo(g1.opponent_pipers);
+        else
+            return ans;
     }
+}
 
-    class Piper {
-        Point pos;
-        Boolean playing;
-        double rats =0.0;
-        double opponent_pipers =0.0;
-        int index;
-        public Piper(Point pos, boolean playing, int index) {
-            this.pos = pos;
-            this.playing = playing;
-            this.index = index;
-        }
+class Piper {
+    Point pos;
+    Boolean playing;
+    double rats =0.0;
+    double opponent_pipers =0.0;
+    int index;
+    public Piper(Point pos, boolean playing, int index) {
+        this.pos = pos;
+        this.playing = playing;
+        this.index = index;
     }
+}
