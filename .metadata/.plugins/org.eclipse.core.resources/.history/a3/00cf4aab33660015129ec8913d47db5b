@@ -203,12 +203,12 @@ public class Player implements pppp.sim.Player {
         }
         //}
         double max_weight = 0;
-        	int larger_side = side +4;
-            int grid_num = (larger_side-1)/grid_size+1;
-            double true_size = (double)larger_side/grid_num;
+
+            int grid_num = (side+4-1)/grid_size+1;
+            double true_size = (double)side/grid_num;
             for(int i=0;i<grid_num;i++){
                 for(int j=0;j<grid_num;j++){
-                    Grid cell = new Grid(new Point((j+.5)*true_size-larger_side*.5,(i+.5)*true_size-larger_side*.5),0);
+                    Grid cell = new Grid(new Point((j+.5)*true_size-side*.5,(i+.5)*true_size-side*.5),0);
                     gridlist.add(cell);
                 }
             }
@@ -237,8 +237,8 @@ public class Player implements pppp.sim.Player {
                     piperlist.get(j).rats+=Math.pow(2, -catched_times+1)*calculate_weight(piperlist.get(j).pos);
                 }
                 if (catched_times ==0) {
-                    int col = new Double((rats[i].x+larger_side*.5) / true_size).intValue();
-                    int row = new Double((rats[i].y+larger_side*.5) / true_size).intValue();
+                    int col = new Double((rats[i].x+side*.5) / true_size).intValue();
+                    int row = new Double((rats[i].y+side*.5) / true_size).intValue();
                     //gridlist.get(row*grid_num+col).rats+=Math.pow(2, -catched_times);
                     gridlist.get(row*grid_num+col).rats++;
                 }
@@ -260,14 +260,14 @@ public class Player implements pppp.sim.Player {
                             count_pipers[y][x] = 0;
                     for(int i=0;i<pipers[g].length;i++){
                         if (pipers_played[g][i]){
-                            int col = new Double((pipers[g][i].x+larger_side*.5) / true_size).intValue();
-                            int row = new Double((pipers[g][i].y+larger_side*.5) / true_size).intValue();
+                            int col = new Double((pipers[g][i].x+side*.5) / true_size).intValue();
+                            int row = new Double((pipers[g][i].y+side*.5) / true_size).intValue();
                             col = (col > grid_num-1)? col-1:col;
                             row = (row > grid_num-1)? row-1:row;
                             col = (col < 0)? col+1:col;
                             row = (row < 0)? row+1:row;
                             count_pipers[row][col]++;
-//                            Point center =new Point((row+.5)*true_size-larger_side*.5,(col+.5)*true_size-larger_side*.5);
+//                            Point center =new Point((row+.5)*true_size-side*.5,(col+.5)*true_size-side*.5);
 //                            if ((pipers[g][i].x-center.x) < -.25*true_size && col > 0){
 //                                count_pipers[row][col-1]++;
 //                                if ((pipers[g][i].y-center.y) < -.25*true_size&& row > 0){
