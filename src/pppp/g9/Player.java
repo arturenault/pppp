@@ -49,6 +49,9 @@ public class Player implements pppp.sim.Player {
     private ArrayList<Piper> piperlist;
     private Point[][] cell_pos = null;
     private Double[] last_weight;
+    
+    private boolean goCorner = false;
+    private Point corner_pos[];
 
     // create move towards specified destination
     private static Move move(Point src, Point dst, boolean play)
@@ -97,6 +100,9 @@ public class Player implements pppp.sim.Player {
 
         cell_pos = new Point [n_pipers][4];
         last_weight = new Double[n_pipers];
+        
+        corner_pos = new Point[2];
+        
 
         for (int p = 0 ; p != n_pipers ; ++p) {
             switchStrategy[p] = false;
@@ -119,7 +125,8 @@ public class Player implements pppp.sim.Player {
             if (n_pipers != 0)
                 x = (side / (n_pipers + 1)) * (p + 1) - side / 2; 
             sweep_pos[p][1] = point(x, side * 0.1, neg_y, swap);
-            pos[p][2] = sweep_pos[p][2] = point(0, side * 0.5 - 2, neg_y, swap);
+            
+            pos[p][2] = sweep_pos[p][2] = point(0, side * 0.5 - 1, neg_y, swap);
             sweep_pos[p][3] = point(0, side * 0.5 + 2, neg_y, swap);
             sweep_pos_index[p] = 0;
             cell_pos[p][0] = cell_pos[p][1] = cell_pos[p][2] = point(0, side * 0.5, neg_y, swap);
@@ -466,7 +473,7 @@ public class Player implements pppp.sim.Player {
                             sweep_piper_id_at_door = -1;
                         }
                         switchStrategy[p] = true;
-                    }else if(withRats_door(src, rats) && (withRivalNearDoor(pipers) || sweep_piper_id_at_door == -1 || sweep_piper_id_at_door == p)){
+                    }else if(withRats_door(src, rats) && (withRivalNearDoor(pipers) > 1 || sweep_piper_id_at_door == -1 || sweep_piper_id_at_door == p)){
                         debug("piper " + p + "should wait");
                         sweep_piper_id_at_door = p;
                         moves[p] = move(src, src, true);
@@ -609,7 +616,7 @@ public class Player implements pppp.sim.Player {
         for(int i = 0 ; i < rats.length; i++){
 
             // ignore rats near door if there is already a piper there 
-            if (!within(door_pos, rats[i], 10) || (within(door_pos, rats[i], 10) && !withRivalNearDoor(pipers))) {
+            if (!within(door_pos, rats[i], 10) || (within(door_pos, rats[i], 10) && !(withRivalNearDoor(pipers) > 1))) {
                 //if (piper_at_door < 0 || !within(door_pos, rats[i], 10)) {
                 double dis = calDistance(piper_pos, rats[i]);
 
@@ -709,15 +716,16 @@ public class Player implements pppp.sim.Player {
         public boolean sameRat(Point p1, Point p2) {
             return calDistance(p1, p2) <= 1;
         }
-        public boolean withRivalNearDoor(Point[][] pipers){
+        public int withRivalNearDoor(Point[][] pipers){
+        	int count = 0;
         	for(int i = 0; i < pipers.length; i++){
         		if(i == id) continue;
         		for(int j = 0; j < pipers[0].length; j++){
         			if(calDistance(pos[0][0], pipers[i][j]) <= 20)
-        				return true;        				
+        				 count++;	
         		}
         	}
-        	return false;
+        	return count;
         }
     }
 
