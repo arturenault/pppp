@@ -291,7 +291,30 @@ public class Player implements pppp.sim.Player {
                             int row = new Double((pipers[g][i].y+side*.5) / true_size).intValue();
                             col = (col > grid_num-1)? col-1:col;
                             row = (row > grid_num-1)? row-1:row;
+                            col = (col < 0)? col+1:col;
+                            row = (row < 0)? row+1:row;
                             count_pipers[row][col]++;
+//                            Point center =new Point((row+.5)*true_size-side*.5,(col+.5)*true_size-side*.5);
+//                            if ((pipers[g][i].x-center.x) < -.25*true_size && col > 0){
+//                                count_pipers[row][col-1]++;
+//                                if ((pipers[g][i].y-center.y) < -.25*true_size&& row > 0){
+//                                    count_pipers[row-1][col-1]++;
+//                                    count_pipers[row-1][col]++;
+//                                }
+//                                else if ((pipers[g][i].y-center.y) > .25*true_size && row < grid_num-1){
+//                                    count_pipers[row+1][col-1]++;
+//                                    count_pipers[row+1][col]++;
+//                                }
+//                            }
+//                            else if ((pipers[g][i].x-center.x) > .25*true_size && col < grid_num-1){
+//                                count_pipers[row][col+1]++;
+//                                if ((pipers[g][i].y-center.y) < -.25*true_size && row > 0){
+//                                    count_pipers[row-1][col-1]++;
+//                                }
+//                                else if ((pipers[g][i].y-center.y) > .25*true_size && row < grid_num-1){
+//                                    count_pipers[row+1][col-1]++;
+//                                }
+//                            }
                         }
                     }
                     for(int x=0;x<grid_num;x++)
