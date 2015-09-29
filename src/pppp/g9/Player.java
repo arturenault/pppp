@@ -140,7 +140,6 @@ public class Player implements pppp.sim.Player {
 			pos[p][1] = null;
 
 			// third position is slightly inside the door
-			// TODO find best position
 			pos[p][3] = point(door, side * 0.5 + 10, neg_y, swap);
 
 			// sweep positions
@@ -159,6 +158,7 @@ public class Player implements pppp.sim.Player {
 	public static void debug(Point point){
 		System.out.println(" point " + point.x + ", " + point.y);
 	}
+	
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 			Point[] rats, Move[] moves)
@@ -173,7 +173,6 @@ public class Player implements pppp.sim.Player {
 			}
 		}
 		else {
-			//        	System.out.println("sparse");
 			sparseStrategy(pipers, pipers_played, rats, moves);
 		}
 	}
@@ -185,21 +184,24 @@ public class Player implements pppp.sim.Player {
 		}
 		return false;
 	}
+	
 	private double distance(Point a, Point b){
 		return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
 	}
+	
 	private double calculate_weight(Point p){
 		double weight = 1 / Math.pow((100+Math.abs(distance(door_pos,p)-side* .5)),0.1);
 		return weight;
 	}
+	
 	// Update information
 	// Calculate the density of different cells
 	private void update_circumstance(Point[][] pipers, boolean[][] pipers_played, Point[] rats){
-		//for (int g=0;g<pipers.length;g++){
+		
 		for (int i=0;i<pipers[id].length;i++){
 			piperlist.add(new Piper(pipers[id][i],pipers_played[id][i],i));
 		}
-		//}
+
 		double max_weight = 0;
 		int larger_side = side +4;
 		int grid_num = (larger_side-1)/grid_size+1;
@@ -240,7 +242,6 @@ public class Player implements pppp.sim.Player {
 				//gridlist.get(row*grid_num+col).rats+=Math.pow(2, -catched_times);
 				gridlist.get(row*grid_num+col).rats++;
 			}
-
 		}
 
 		//give the grid different weight according to distance between it and the gate
@@ -265,27 +266,6 @@ public class Player implements pppp.sim.Player {
 						col = (col < 0)? col+1:col;
 						row = (row < 0)? row+1:row;
 						count_pipers[row][col]++;
-						//                            Point center =new Point((row+.5)*true_size-larger_side*.5,(col+.5)*true_size-larger_side*.5);
-						//                            if ((pipers[g][i].x-center.x) < -.25*true_size && col > 0){
-						//                                count_pipers[row][col-1]++;
-						//                                if ((pipers[g][i].y-center.y) < -.25*true_size&& row > 0){
-						//                                    count_pipers[row-1][col-1]++;
-						//                                    count_pipers[row-1][col]++;
-						//                                }
-						//                                else if ((pipers[g][i].y-center.y) > .25*true_size && row < grid_num-1){
-						//                                    count_pipers[row+1][col-1]++;
-						//                                    count_pipers[row+1][col]++;
-						//                                }
-						//                            }
-						//                            else if ((pipers[g][i].x-center.x) > .25*true_size && col < grid_num-1){
-						//                                count_pipers[row][col+1]++;
-						//                                if ((pipers[g][i].y-center.y) < -.25*true_size && row > 0){
-						//                                    count_pipers[row-1][col-1]++;
-						//                                }
-						//                                else if ((pipers[g][i].y-center.y) > .25*true_size && row < grid_num-1){
-						//                                    count_pipers[row+1][col-1]++;
-						//                                }
-						//                            }
 					}
 				}
 				for(int x=0;x<grid_num;x++)
@@ -316,9 +296,7 @@ public class Player implements pppp.sim.Player {
 	//allocate jobs to different pipers
 	private void allocate_destination(ArrayList<Grid> gridlist, ArrayList<Piper> free_pipers){
 		int piper_num = free_pipers.size();
-		// double[][] weight_matrix = new double[piper_num][piper_num];
 		TreeSet<Grid> sorted_grid = new TreeSet<Grid>();
-		// int num = (piper_num < gridlist.size()) ? piper_num:gridlist.size();
 		for (int i=0;i<gridlist.size();i++){
 			sorted_grid.add(gridlist.get(i));
 		}
@@ -351,7 +329,6 @@ public class Player implements pppp.sim.Player {
 				else
 					cell.rats /=2;
 			}
-			//System.out.println("piper("+free_pipers.get(piper_id).index+"):"+ max_weight * Math.pow(100+this.distance(free_pipers.get(piper_id).pos,cell.center),0.1));
 			sorted_grid.add(cell);
 		}
 		return;
@@ -382,14 +359,13 @@ public class Player implements pppp.sim.Player {
 		return max;
 	}
 	private void cellStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
-		//System.out.println("function begin!");
+
 		this.gridlist = new ArrayList<Grid>();
 		this.piperlist = new ArrayList<Piper>();
 		update_circumstance(pipers,pipers_played,rats);
-		//System.out.println("update_circumstance seccessfully!");
 		ArrayList<Piper> free_piper = new ArrayList<Piper> ();
 		for(int i=0;i< pipers[id].length;i++){
-			if (pos_index[i] ==1 /*|| pos_index[i] == 2*/) {
+			if (pos_index[i] ==1) {
 				free_piper.add(new Piper(pipers[id][i],pipers_played[id][i],i));
 			}
 		}
@@ -400,11 +376,11 @@ public class Player implements pppp.sim.Player {
 				pos_index[piper.index] = 3;
 			}
 		}
-		//System.out.println("allocate seccessfully!");
+
 		for (int p = 0 ; p != pipers[id].length ; ++p) {
 			Point src = pipers[id][p];
 			Point dst = cell_pos[p][pos_index[p]];
-			//if (dst == null ) dst = random_pos[p];
+
 			// if position is reached
 			if (Math.abs(src.x - dst.x) < 0.000001 &&
 					Math.abs(src.y - dst.y) < 0.000001 ||
@@ -429,12 +405,6 @@ public class Player implements pppp.sim.Player {
 					last_weight[p] = 0.0;
 				}
 				dst = cell_pos[p][pos_index[p]];
-				// generate a new position if random
-				/*if (dst == null) {
-                  double x = (gen.nextDouble() - 0.5) * side * 0.9;
-                  double y = (gen.nextDouble() - 0.5) * side * 0.9;
-                  random_pos[p] = dst = new Point(x, y);
-                  }*/
 			}
 			// set music on or off
 			boolean music = false;
@@ -448,6 +418,7 @@ public class Player implements pppp.sim.Player {
 	private static void debug(String s){
 		// System.out.println("debug: " + s);
 	}
+	
 	private void sweepStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
 		if(pipers[id].length >= 2){
 			for(int i = 0; i < 2; i++){
@@ -587,7 +558,6 @@ public class Player implements pppp.sim.Player {
 									// This piper owns this rat, update position of rat
 									piper_rats[j] = rats[i];
 									return rats[i];
-
 									// Otherwise someone else does
 								} else {
 									already_assigned = true;
@@ -595,7 +565,6 @@ public class Player implements pppp.sim.Player {
 								}
 							}
 						}
-
 
 						// if nobody else is handling this rat, this piper can take it.
 						if (!already_assigned && onePiperCanHelp(pipers, rats[i])) {
@@ -612,14 +581,7 @@ public class Player implements pppp.sim.Player {
 		piper_rats[piper_index] = rats[min_index];
 		return rats[min_index];
 	}
-	//
-	//	public boolean nearTeammate(Point piper_pos, Point[] other_pipers) {
-	//		for (int i = 0; i < other_pipers.length; i++) {
-	//			if(within(piper_pos, other_pipers[i]), ) 
-	//				return true;
-	//		}
-	//		return false;
-	//	}
+
 	public boolean onePiperCanHelp(Point[][] pipers, Point rat) {
 		int friends = 0;
 		int max_rival = 0;
@@ -719,8 +681,6 @@ public class Player implements pppp.sim.Player {
 			else {
 				tan = Math.abs(xDiff / yDiff);
 			}
-
-			//2.0771747651638983tan 0.03626943005183244
 
 			double thresh = (double) 20 / 100;
 			debug("tan " + tan + "thresh " + thresh + "id " +neighbor_id);
