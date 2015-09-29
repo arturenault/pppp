@@ -47,15 +47,19 @@ class HTTPServer {
 		do {
 			try {
 				ch = in.read();
-			} catch (SocketException e) {
-				connection.close();
+			} catch (IOException e1) {
+				try {
+					connection.close();
+				} catch (IOException e2) {}
 				connection = null;
-				return null;
+				throw e1;
 			}
 			if (ch < 0 || i == buffer.length) {
-				connection.close();
+				try {
+					connection.close();
+				} catch (IOException e) {}
 				connection = null;
-				throw new IllegalStateException("Incomplete HTTP request");
+				throw new UnknownServiceException("Incomplete HTTP request");
 			}
 			buffer[i++] = (byte) ch;
 		} while (i < 4 || buffer[i - 1] != '\n' || buffer[i - 2] != '\r'
@@ -66,27 +70,28 @@ class HTTPServer {
 		if (parts.length != 3 || !parts[0].equals("GET")
 		                      || !parts[1].startsWith("/")
 		                      || !parts[2].equals("HTTP/1.1")) {
-			connection.close();
+			try {
+				connection.close();
+			} catch (IOException e) {}
 			connection = null;
 			throw new UnknownServiceException("Invalid HTTP request: " + line);
 		}
 		return parts[1].substring(1);
 	}
 
-	public boolean reply(File file) throws IOException
+	public void reply(File file) throws IOException
 	{
 		if (connection == null)
 			throw new NoConnectionPendingException();
 		FileInputStream in = new FileInputStream(file);
 		OutputStream out = connection.getOutputStream();
-		DateTimeFormatter fmt = DateTimeFormatter.RFC_1123_DATE_TIME;
-		String date = ZonedDateTime.now(ZoneId.of("GMT")).format(fmt);
+		String date = ZonedDateTime.now(ZoneId.of("GMT")).format(
+		                    DateTimeFormatter.RFC_1123_DATE_TIME);
 		String header = "HTTP/1.1 200 OK\r\n";
 		long length = file.length();
 		header += "Content-Length: " + length + "\r\n";
 		header += "Cache-Control: no-cache, no-store\r\n";
 		header += "Date: " + date + "\r\n\r\n";
-		boolean ok = true;
 		try {
 			out.write(header.getBytes());
 			int bytes;
@@ -97,37 +102,36 @@ class HTTPServer {
 			}
 			if (length != 0)
 				throw new IOException("File modified during send");
-		} catch (SocketException e) {
-			ok = false;
 		} finally {
-			in.close();
-			connection.close();
+			try {
+				in.close();
+			} catch (IOException e) {}
+			try {
+				connection.close();
+			} catch (IOException e) {}
 			connection = null;
 		}
-		return ok;
 	}
 
-	public boolean reply(String content) throws IOException
+	public void reply(String content) throws IOException
 	{
 		if (connection == null)
 			throw new NoConnectionPendingException();
 		OutputStream out = connection.getOutputStream();
-		DateTimeFormatter fmt = DateTimeFormatter.RFC_1123_DATE_TIME;
-		String date = ZonedDateTime.now(ZoneId.of("GMT")).format(fmt);
+		String date = ZonedDateTime.now(ZoneId.of("GMT")).format(
+		                    DateTimeFormatter.RFC_1123_DATE_TIME);
 		String header = "HTTP/1.1 200 OK\r\n";
 		header += "Content-Length: " + content.length() + "\r\n";
 		header += "Cache-Control: no-cache, no-store\r\n";
 		header += "Date: " + date + "\r\n\r\n";
-		boolean ok = true;
 		try {
 			out.write(header.getBytes());
 			out.write(content.getBytes());
-		} catch (SocketException e) {
-			ok = false;
 		} finally {
-			connection.close();
+			try {
+				connection.close();
+			} catch (IOException e) {}
 			connection = null;
 		}
-		return ok;
 	}
 }
