@@ -20,11 +20,11 @@ public class Player implements pppp.sim.Player {
 	{
 		double dx = dst.x - src.x;
 		double dy = dst.y - src.y;
-		double length = Math.sqrt(dx * dx + dy * dy);
+		double length = Math.hypot(dx, dy);
 		double limit = play ? 0.1 : 0.5;
 		if (length > limit) {
-			dx = (dx * limit) / length;
-			dy = (dy * limit) / length;
+			dx = dx * limit / length;
+			dy = dy * limit / length;
 		}
 		return new Move(dx, dy, play);
 	}
