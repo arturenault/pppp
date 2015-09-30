@@ -158,7 +158,7 @@ public class Player implements pppp.sim.Player {
 	public static void debug(Point point){
 		System.out.println(" point " + point.x + ", " + point.y);
 	}
-	
+
 	// return next locations on last argument
 	public void play(Point[][] pipers, boolean[][] pipers_played,
 			Point[] rats, Move[] moves)
@@ -184,20 +184,19 @@ public class Player implements pppp.sim.Player {
 		}
 		return false;
 	}
-	
+
 	private double distance(Point a, Point b){
 		return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));
 	}
-	
+
 	private double calculate_weight(Point p){
 		double weight = 1 / Math.pow((100+Math.abs(distance(door_pos,p)-side* .5)),0.1);
 		return weight;
 	}
-	
-	// Update information
-	// Calculate the density of different cells
+
+	// Update information - Calculate the density of different cells
 	private void update_circumstance(Point[][] pipers, boolean[][] pipers_played, Point[] rats){
-		
+
 		for (int i=0;i<pipers[id].length;i++){
 			piperlist.add(new Piper(pipers[id][i],pipers_played[id][i],i));
 		}
@@ -231,7 +230,6 @@ public class Player implements pppp.sim.Player {
 			if (catched_times ==0) {
 				int col = new Double((rats[i].x+larger_side*.5) / true_size).intValue();
 				int row = new Double((rats[i].y+larger_side*.5) / true_size).intValue();
-				//gridlist.get(row*grid_num+col).rats+=Math.pow(2, -catched_times);
 				gridlist.get(row*grid_num+col).rats++;
 			}
 		}
@@ -244,9 +242,9 @@ public class Player implements pppp.sim.Player {
 		}
 		{
 			int col = new Double((door_pos.x + larger_side * .5) / true_size)
-					.intValue();
+			.intValue();
 			int row = new Double((door_pos.y + larger_side * .5) / true_size)
-					.intValue();
+			.intValue();
 			gridlist.get(row * grid_num + col).rats = 0.0;
 		}
 		int[][] count_pipers = new int[grid_num][grid_num];
@@ -382,6 +380,7 @@ public class Player implements pppp.sim.Player {
 		}
 		return max;
 	}
+	
 	private void cellStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
 
 		this.gridlist = new ArrayList<Grid>();
@@ -437,10 +436,7 @@ public class Player implements pppp.sim.Player {
 			moves[p] = move(src, dst, music);
 		}
 	}
-	private static void debug(String s){
-		// System.out.println("debug: " + s);
-	}
-	
+
 	private void sweepStrategy(Point[][] pipers, boolean[][] pipers_played, Point[] rats, Move[] moves) {
 		if(pipers[id].length >= 2){
 			for(int i = 0; i < 2; i++){
@@ -467,24 +463,24 @@ public class Player implements pppp.sim.Player {
 			// if position is reached
 			if ( Math.abs(src.x - dst.x) < 0.000001 &&
 					Math.abs(src.y - dst.y) < 0.000001) {
-                if (pos_index[p] == 3) {
-                    if (isNear(src, rats) && NumPiperAtGate-1 <= NumRivalNearDoor(pipers)){
-                        moves[p] = move(src, src, true);
-                        continue;
-                    } else {
-                    	NumPiperAtGate --;
-                    }
-                }
-                if (++pos_index[p] == cell_pos[p].length) pos_index[p] = 0;
-                if (pos_index[p] == 3) {
-                    sweepover = true;
-                    if (pos_index[p] == 3) {
-                        if (!isNear(src, rats) || NumPiperAtGate > NumRivalNearDoor(pipers))
-                            pos_index[p] = 0;
-                        else
-                        	NumPiperAtGate ++;
-                    }
-                }
+				if (pos_index[p] == 3) {
+					if (isNear(src, rats) && NumPiperAtGate-1 <= NumRivalNearDoor(pipers)){
+						moves[p] = move(src, src, true);
+						continue;
+					} else {
+						NumPiperAtGate --;
+					}
+				}
+				if (++pos_index[p] == cell_pos[p].length) pos_index[p] = 0;
+				if (pos_index[p] == 3) {
+					sweepover = true;
+					if (pos_index[p] == 3) {
+						if (!isNear(src, rats) || NumPiperAtGate > NumRivalNearDoor(pipers))
+							pos_index[p] = 0;
+						else
+							NumPiperAtGate ++;
+					}
+				}
 			}
 			else {
 				moves[p] = move(src, dst, pos_index[p] > 1);
@@ -629,6 +625,7 @@ public class Player implements pppp.sim.Player {
 		}
 		return false;
 	}
+	
 	public boolean withRats_door(Point piper_pos, Point[] rats){ 
 		for(int i = 0 ; i < rats.length; i++){
 			if(within(piper_pos, rats[i], 10))
@@ -653,6 +650,7 @@ public class Player implements pppp.sim.Player {
 	public boolean sameRat(Point p1, Point p2) {
 		return calDistance(p1, p2) <= 1;
 	}
+	
 	public boolean withRivalNearDoor(Point[][] pipers){
 		for(int i = 0; i < pipers.length; i++){
 			if(i == id) continue;
@@ -689,6 +687,7 @@ public class Player implements pppp.sim.Player {
 		return ret;
 
 	}
+	
 	public boolean isAnyPiperGoCorner(Point[][] pipers, int neighbor_id){
 		for(int i = 0; i < pipers[0].length; i++){
 			double xDiff = pipers[neighbor_id][i].x - neighbor_old_pos[neighbor_id][i].x;
@@ -707,6 +706,7 @@ public class Player implements pppp.sim.Player {
 		}
 		return false;
 	}
+	
 	public boolean outDoor(Point[][] pipers, int neighbor_id, int piper_id){
 		if(neighbor_id == 0 || neighbor_id == 2){
 			if(Math.abs(pipers[neighbor_id][piper_id].y) < side / 2) 
@@ -722,19 +722,19 @@ public class Player implements pppp.sim.Player {
 	}
 }
 
-
 class Grid implements Comparable<Grid>{
 	Point center;
 	Double rats;
 	Double opponent_pipers =0.0;
+	
 	public Grid(Point center, double rats) {
 		this.center = center;
 		this.rats = rats;
 	}
 
 	public int compareTo(Grid g1) {
-    	return (new Double(g1.rats/(g1.opponent_pipers+1))).compareTo
-    			(new Double(this.rats/(this.opponent_pipers+1)));
+		return (new Double(g1.rats/(g1.opponent_pipers+1))).compareTo
+				(new Double(this.rats/(this.opponent_pipers+1)));
 	}
 }
 
