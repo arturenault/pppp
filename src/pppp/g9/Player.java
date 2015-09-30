@@ -31,7 +31,7 @@ public class Player implements pppp.sim.Player {
 	private Point[][] pos = null;
 	private Random gen = new Random();
 	private Point[] piper_rats;
-	private int with_rat_threshold = 10;
+	private int with_rat_threshold = 3;
 	private Point[][] sweep_pos;
 	private boolean[] switchStrategy;
 	private int sweep_piper_id_at_door;
@@ -585,7 +585,7 @@ public class Player implements pppp.sim.Player {
 						}
 
 						// if nobody else is handling this rat, this piper can take it.
-						if (!already_assigned && onePiperCanHelp(pipers, rats[i])) {
+						if (!already_assigned || onePiperCanHelp(pipers, rats[i])) {
 							min = dis;
 							min_index = i;
 						}
@@ -619,7 +619,7 @@ public class Player implements pppp.sim.Player {
 			}
 		}
 		int density = friends - max_rival;
-		return density >= -1;
+		return density >= -1 && density <= 0;
 	}
 
 	public boolean withRats(Point piper_pos, Point[] rats){ 
